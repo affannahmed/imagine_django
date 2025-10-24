@@ -1,0 +1,350 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Configure Image Properties{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .config-container {
+        max-width: 100%;
+        margin: 20px;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .category-info {
+        background: #e8f4f8;
+        padding: 15px 20px;
+        border-radius: 4px;
+        margin-bottom: 25px;
+        border-left: 4px solid #417690;
+    }
+    
+    .category-info h3 {
+        margin: 0 0 10px 0;
+        color: #417690;
+    }
+    
+    .category-info p {
+        margin: 5px 0;
+    }
+    
+    .images-scroll-container {
+        overflow-x: auto;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .image-grid {
+        display: flex;
+        gap: 15px;
+        min-width: min-content;
+    }
+    
+    .image-card {
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        background: #fafafa;
+        transition: all 0.3s;
+        min-width: 280px;
+        max-width: 280px;
+        flex-shrink: 0;
+    }
+    
+    .image-card:hover {
+        border-color: #417690;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .image-preview {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        background: #e0e0e0;
+    }
+    
+    .image-number {
+        font-weight: bold;
+        font-size: 16px;
+        color: #417690;
+        margin-bottom: 12px;
+        text-align: center;
+        padding: 8px;
+        background: #e8f4f8;
+        border-radius: 4px;
+    }
+    
+    .form-field {
+        margin-bottom: 12px;
+    }
+    
+    .form-field label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #333;
+    }
+    
+    .form-field select,
+    .form-field input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    
+    .form-field .helptext {
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: #666;
+        font-style: italic;
+    }
+    
+    .submit-section {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 20px;
+        border-top: 2px solid #ddd;
+        margin: 0 -30px -30px -30px;
+        text-align: right;
+        z-index: 100;
+    }
+    
+    .submit-section input[type="submit"] {
+        background: #417690;
+        color: white;
+        padding: 12px 40px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .submit-section input[type="submit"]:hover {
+        background: #2e5266;
+    }
+    
+    .bulk-actions {
+        background: #fff3cd;
+        padding: 15px 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .bulk-actions h4 {
+        margin: 0 0 12px 0;
+        color: #856404;
+    }
+    
+    .bulk-action-btn {
+        background: #ffc107;
+        color: #000;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        margin-right: 10px;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    .bulk-action-btn:hover {
+        background: #e0a800;
+    }
+    
+    .scroll-hint {
+        text-align: center;
+        color: #666;
+        font-size: 13px;
+        margin-top: -10px;
+        margin-bottom: 15px;
+    }
+    
+    .scroll-hint::before {
+        content: '← ';
+    }
+    
+    .scroll-hint::after {
+        content: ' →';
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}">Create Assets</a>
+    &rsaquo; Configure Images
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Configure Image Properties</h1>
+
+<div class="config-container">
+    <div class="category-info">
+        <h3>📁 Category Information</h3>
+        <p><strong>Main Category:</strong> {{ upload_data.main_category }}</p>
+        {% if upload_data.sub_category %}
+        <p><strong>Sub Category:</strong> {{ upload_data.sub_category }}</p>
+        {% endif %}
+        <p><strong>Total Images:</strong> {{ upload_data.image_count }}</p>
+        <p><strong>Save Location:</strong> <code>media/assets/Imagine-New/{{ upload_data.main_category }}{% if upload_data.sub_category %}/{{ upload_data.sub_category }}{% endif %}/</code></p>
+    </div>
+    
+    <div class="bulk-actions">
+        <h4>⚡ Quick Actions (Apply to All Images)</h4>
+        <button type="button" class="bulk-action-btn" onclick="setAllPremium(true)">✓ Set All Premium</button>
+        <button type="button" class="bulk-action-btn" onclick="setAllPremium(false)">✗ Set All Free</button>
+        <button type="button" class="bulk-action-btn" onclick="copyTagsToAll()">📋 Copy First Image Tags to All</button>
+    </div>
+    
+    <form method="post" id="configForm">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        
+        <div class="scroll-hint">Scroll horizontally to see all images</div>
+        
+        <div class="images-scroll-container">
+            <div class="image-grid">
+                {% for form in formset %}
+                    <div class="image-card" data-image-index="{{ forloop.counter0 }}">
+                        <div class="image-number">Image {{ form.instance.image_number }}</div>
+                        {% if form.instance.image %}
+                            <img src="{{ form.instance.image.url }}" alt="Image {{ form.instance.image_number }}" class="image-preview">
+                        {% endif %}
+                        
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <div class="form-field">
+                            <label for="{{ form.is_premium.id_for_label }}">Premium Status:</label>
+                            {{ form.is_premium }}
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="{{ form.tags_input.id_for_label }}">Objects/Tags:</label>
+                            {{ form.tags_input }}
+                            <span class="helptext">Comma-separated (e.g., woman, tree, car)</span>
+                        </div>
+                        
+                        {% if form.errors %}
+                            <div class="error" style="color: red; font-size: 12px; margin-top: 5px;">
+                                {{ form.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="submit-section">
+            <input type="submit" value="💾 Save All {{ upload_data.image_count }} Images" />
+        </div>
+    </form>
+</div>
+
+<script>
+    function setAllPremium(isPremium) {
+        const selects = document.querySelectorAll('select[name$="-is_premium"]');
+        selects.forEach(select => {
+            select.value = isPremium ? 'True' : 'False';
+        });
+        
+        // Visual feedback
+        const cards = document.querySelectorAll('.image-card');
+        cards.forEach(card => {
+            if (isPremium) {
+                card.style.background = '#fff9e6';
+            } else {
+                card.style.background = '#fafafa';
+            }
+        });
+        
+        alert(`✓ All images set to ${isPremium ? 'Premium' : 'Free'}!`);
+    }
+    
+    function copyTagsToAll() {
+        const firstTagsInput = document.querySelector('input[name$="-tags_input"]');
+        if (!firstTagsInput || !firstTagsInput.value.trim()) {
+            alert('⚠️ Please enter tags in the first image before copying.');
+            return;
+        }
+        
+        const tagsValue = firstTagsInput.value;
+        const allTagsInputs = document.querySelectorAll('input[name$="-tags_input"]');
+        
+        let count = 0;
+        allTagsInputs.forEach((input, index) => {
+            if (index > 0) {  // Skip the first one
+                input.value = tagsValue;
+                count++;
+            }
+        });
+        
+        alert(`✓ Tags "${tagsValue}" copied to ${count} images!`);
+    }
+    
+    // Confirm before leaving if form is dirty
+    let formChanged = false;
+    document.getElementById('configForm').addEventListener('change', function() {
+        formChanged = true;
+    });
+    
+    document.getElementById('configForm').addEventListener('submit', function() {
+        formChanged = false;
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Add visual feedback for premium status
+    document.querySelectorAll('select[name$="-is_premium"]').forEach(select => {
+        select.addEventListener('change', function() {
+            const card = this.closest('.image-card');
+            if (this.value === 'True') {
+                card.style.background = '#fff9e6';
+            } else {
+                card.style.background = '#fafafa';
+            }
+        });
+        
+        // Set initial state
+        const card = select.closest('.image-card');
+        if (select.value === 'True') {
+            card.style.background = '#fff9e6';
+        }
+    });
+    
+    // Smooth scroll hint
+    const scrollContainer = document.querySelector('.images-scroll-container');
+    const scrollHint = document.querySelector('.scroll-hint');
+    
+    scrollContainer.addEventListener('scroll', function() {
+        if (scrollContainer.scrollLeft > 50) {
+            scrollHint.style.opacity = '0';
+        } else {
+            scrollHint.style.opacity = '1';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin/css/custom_imagine_admin.css' %}">
+<style>
+    .category-positions-info {
+        background: #e8f4f8;
+        padding: 15px 20px;
+        border-radius: 4px;
+        margin: 15px 0;
+        border-left: 4px solid #417690;
+    }
+    .category-positions-info h3 {
+        margin: 0 0 10px 0;
+        color: #417690;
+        font-size: 16px;
+    }
+    .positions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .position-item {
+        background: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .position-badge {
+        background: #417690;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-weight: bold;
+        font-size: 12px;
+        min-width: 30px;
+        text-align: center;
+    }
+    .category-name {
+        font-weight: 500;
+        color: #333;
+    }
+</style>
+<script>
+    // Force refresh images after page load and after any operation
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add timestamp to all images to force refresh
+        const images = document.querySelectorAll('img[src*="/media/"]');
+        const timestamp = Date.now();
+        
+        images.forEach(img => {
+            const src = img.src;
+            // Remove any existing timestamp parameter
+            const cleanSrc = src.split('?')[0];
+            // Add new timestamp
+            img.src = cleanSrc + '?t=' + timestamp;
+            
+            // Force reload on error
+            img.onerror = function() {
+                console.log('Image load error, retrying:', this.src);
+                setTimeout(() => {
+                    this.src = cleanSrc + '?t=' + Date.now();
+                }, 100);
+            };
+        });
+        
+        // Disable browser cache for images
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                names.forEach(function(name) {
+                    if (name.includes('media') || name.includes('assets')) {
+                        caches.delete(name);
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content_title %}
+<h1>{{ title }}</h1>
+
+{% if positions_info %}
+<div class="category-positions-info">
+    <h3>📋 Main Category Positions</h3>
+    <div class="positions-grid">
+        {% for pos_info in positions_info %}
+        <div class="position-item">
+            <span class="position-badge">{{ pos_info.position }}</span>
+            <span class="category-name">{{ pos_info.category }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

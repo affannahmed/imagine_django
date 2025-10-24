@@ -1,0 +1,175 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Move Category: {{ batch.main_category }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}">Create Assets</a>
+    &rsaquo; Move Main Category
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Move Main Category: {{ batch.main_category }}</h1>
+    <p><strong>Current Position:</strong> {{ batch.position }}</p>
+    <p><strong>Total Images in this Main Category:</strong> {{ batch.images.count }}</p>
+    
+    <div class="info-box">
+        <h3>ℹ️ What happens when you move?</h3>
+        <p>Moving this main category will:</p>
+        <ul>
+            <li>Move <strong>{{ batch.main_category }}</strong> to a new position in the category list</li>
+            <li>Move <strong>ALL subcategories</strong> under {{ batch.main_category }} along with it</li>
+            <li>Keep all image data (tags, premium status, image files) intact</li>
+            <li>Automatically adjust positions of other main categories</li>
+        </ul>
+    </div>
+    
+    <form method="post" class="move-category-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="new_position">New Position (0 to {{ max_position }}):</label>
+            <input type="number" 
+                   name="new_position" 
+                   id="new_position" 
+                   min="0" 
+                   max="{{ max_position }}" 
+                   value="{{ batch.position }}"
+                   required>
+            <span class="helptext">0 = First position, {{ max_position }} = Last position</span>
+        </div>
+
+        <div class="preview-section">
+            <h3>Current Main Category Order:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Main Category</th>
+                        <th>Subcategories</th>
+                        <th>Total Images</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for main_cat, data in all_batches_grouped.items %}
+                    <tr {% if main_cat == batch.main_category %}style="background-color: #ffc;"{% endif %}>
+                        <td><strong>{{ data.position }}</strong></td>
+                        <td>
+                            <strong>{{ main_cat }}</strong>
+                            {% if main_cat == batch.main_category %}<em style="color: #417690;">(Moving This)</em>{% endif %}
+                        </td>
+                        <td>
+                            {% for b in data.batches %}
+                                {% if b.sub_category %}
+                                    <span style="background: #e8f4f8; padding: 2px 8px; border-radius: 3px; margin: 2px; display: inline-block;">
+                                        {{ b.sub_category }} ({{ b.images.count }} img)
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                            {% if not data.batches.0.sub_category %}
+                                <span style="color: #666;">No subcategories</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% with total=0 %}
+                                {% for b in data.batches %}
+                                    {% with total=total|add:b.images.count %}
+                                    {% endwith %}
+                                {% endfor %}
+                                {{ total }} images
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Move Main Category" class="default">
+            <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .move-category-form {
+        max-width: 100%;
+    }
+    .info-box {
+        background: #e8f4f8;
+        padding: 15px 20px;
+        border-radius: 4px;
+        margin: 20px 0;
+        border-left: 4px solid #417690;
+    }
+    .info-box h3 {
+        margin: 0 0 10px 0;
+        color: #417690;
+    }
+    .info-box ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+    .info-box li {
+        margin: 5px 0;
+    }
+    .form-group {
+        margin: 20px 0;
+    }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-group input {
+        padding: 8px;
+        font-size: 14px;
+        width: 200px;
+    }
+    .form-group .helptext {
+        display: block;
+        margin-top: 5px;
+        font-size: 12px;
+        color: #666;
+    }
+    .preview-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .preview-section table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .preview-section th,
+    .preview-section td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .preview-section th {
+        background: #417690;
+        color: white;
+    }
+    .submit-row {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .submit-row input[type="submit"] {
+        margin-bottom: 0;
+    }
+</style>
+
+{% endblock %}

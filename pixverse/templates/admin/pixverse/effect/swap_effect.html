@@ -1,0 +1,151 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Swap Effect: {{ effect.display_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:pixverse_effect_changelist' %}">Video Effects</a>
+    &rsaquo; Swap Effect
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  
+    <p><strong>Category:</strong> <span style="background: #e8f4f8; padding: 3px 8px; border-radius: 3px;">{{ category.name }}</span></p>
+    <p><strong>Current Position in {{ category.name }}:</strong> {{ effect.position }}</p>
+    
+    {% if effect.video %}
+    <div class="video-preview">
+        <h3>Current Video:</h3>
+        <video width="400" height="300" controls style="border-radius: 4px;">
+            <source src="{{ effect.video.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    {% endif %}
+    
+    <form method="post" class="swap-effect-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="swap_with">Swap with Effect in {{ category.name }}:</label>
+            <select name="swap_with" id="swap_with" required>
+                <option value="">-- Select an effect to swap with --</option>
+                {% for eff in other_effects %}
+                <option value="{{ eff.id }}">
+                    [Position {{ eff.position }}] {{ eff.display_name }} ({{ eff.name }})
+                </option>
+                {% endfor %}
+            </select>
+            <p class="help">Select an effect to swap positions with. All effect data will be swapped.</p>
+        </div>
+
+        <div class="effects-preview">
+            <h3>Available Effects in {{ category.name }}:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Name</th>
+                        <th>Display Name</th>
+                        <th>Premium</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background-color: #ffc;">
+                        <td><strong>{{ effect.position }}</strong></td>
+                        <td>{{ effect.name }}</td>
+                        <td>{{ effect.display_name }} <em>(Current)</em></td>
+                        <td>{% if effect.Prem %}<span style="background: #ffc107; color: black; padding: 2px 6px; border-radius: 2px;">Premium</span>{% else %}<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 2px;">Free</span>{% endif %}</td>
+                    </tr>
+                    {% for eff in other_effects %}
+                    <tr>
+                        <td><strong>{{ eff.position }}</strong></td>
+                        <td>{{ eff.name }}</td>
+                        <td>{{ eff.display_name }}</td>
+                        <td>{% if eff.Prem %}<span style="background: #ffc107; color: black; padding: 2px 6px; border-radius: 2px;">Premium</span>{% else %}<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 2px;">Free</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Swap Effects" class="default">
+            <a href="{% url 'admin:pixverse_effect_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .video-preview {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .video-preview h3 {
+        margin-top: 0;
+    }
+    .swap-effect-form {
+        max-width: 900px;
+    }
+    .form-group {
+        margin: 20px 0;
+    }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-group select {
+        padding: 8px;
+        font-size: 14px;
+        width: 100%;
+        max-width: 600px;
+    }
+    .form-group .help {
+        color: #666;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    .effects-preview {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .effects-preview table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .effects-preview th,
+    .effects-preview td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .effects-preview th {
+        background: #417690;
+        color: white;
+    }
+    .submit-row {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .submit-row input[type="submit"] {
+        margin-bottom: 0;
+    }
+</style>
+
+{% endblock %}

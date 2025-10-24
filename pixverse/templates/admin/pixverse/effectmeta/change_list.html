@@ -1,0 +1,66 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}Check Version{% endblock %}
+
+{% block content_title %}<h1>Check Version</h1>{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div style="max-width: 1200px; margin: 20px 0;">
+    <div style="background: #e8f4f8; padding: 20px; border-radius: 4px; border-left: 4px solid #417690; margin-bottom: 20px;">
+        <h2 style="margin-top: 0; color: #417690;">Version Information</h2>
+        <p style="font-size: 16px;"><strong>Current Version:</strong> <span style="background: #417690; color: white; padding: 8px 20px; border-radius: 3px; font-size: 20px; font-weight: bold;">{{ current_version }}</span></p>
+        <p style="color: #666; margin-top: 10px; font-size: 14px;">Version increments with each operation: move category, move effect, swap effect.</p>
+        
+        <a href="{% url 'admin:pixverse_reset_version' %}" class="button" style="background: #ba2121; margin-top: 10px; display: inline-block; color: white; text-decoration: none; padding: 8px 15px; border-radius: 3px;">↻ Reset Version to 0</a>
+    </div>
+
+    <div style="background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
+        <h2 style="margin-top: 0;">Summary Statistics</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="background: #f0f0f0; border-bottom: 2px solid #ddd;">
+                <td style="padding: 12px; font-weight: bold;">Total Categories</td>
+                <td style="padding: 12px; font-size: 18px; color: #417690; font-weight: bold;">{{ category_count }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 12px; font-weight: bold;">Total Effects</td>
+                <td style="padding: 12px; font-size: 18px; color: #417690; font-weight: bold;">{{ total_effects }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 4px;">
+        <h2 style="margin-top: 0;">Categories & Effects Breakdown</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #417690; color: white;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Position</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Category Name</th>
+                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Effect Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr style="border-bottom: 1px solid #ddd; {% cycle 'background: #f9f9f9;' 'background: #fff;' %}">
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>{{ cat.position }}</strong></td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">{{ cat.name }}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                        <span style="background: #e8f4f8; padding: 5px 12px; border-radius: 3px; font-weight: bold;">{{ cat.effect_count }}</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 20px; text-align: center; color: #666;">No categories yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

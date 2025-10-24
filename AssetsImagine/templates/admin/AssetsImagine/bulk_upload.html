@@ -1,0 +1,330 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Create Assets - Bulk Upload{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .upload-form {
+        max-width: 900px;
+        margin: 20px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-row {
+        margin-bottom: 20px;
+    }
+    
+    .form-row label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #333;
+        font-size: 14px;
+    }
+    
+    .form-row select,
+    .form-row input[type="text"],
+    .form-row input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .form-row select {
+        height: 45px;
+    }
+    
+    .form-row .helptext {
+        display: block;
+        margin-top: 5px;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .submit-row {
+        margin-top: 30px;
+        text-align: right;
+    }
+    
+    .submit-row input[type="submit"] {
+        background: #417690;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    
+    .submit-row input[type="submit"]:hover {
+        background: #2e5266;
+    }
+    
+    .file-upload-wrapper {
+        border: 2px dashed #ddd;
+        border-radius: 4px;
+        padding: 30px;
+        text-align: center;
+        background: #f9f9f9;
+        transition: all 0.3s;
+    }
+    
+    .file-upload-wrapper:hover {
+        border-color: #417690;
+        background: #f0f7ff;
+    }
+    
+    .file-upload-wrapper input[type="file"] {
+        border: none;
+        background: transparent;
+    }
+    
+    .instructions {
+        background: #e8f4f8;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 25px;
+        border-left: 4px solid #417690;
+    }
+    
+    .instructions h3 {
+        margin-top: 0;
+        color: #417690;
+    }
+    
+    .instructions ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+    
+    .instructions li {
+        margin: 8px 0;
+    }
+    
+    .category-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #ddd;
+    }
+    
+    .category-tab {
+        padding: 10px 20px;
+        background: #f0f0f0;
+        border: none;
+        border-radius: 4px 4px 0 0;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+    
+    .category-tab.active {
+        background: #417690;
+        color: white;
+    }
+    
+    .category-tab:hover {
+        background: #5a8fa8;
+        color: white;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .or-divider {
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+    }
+    
+    .or-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #ddd;
+    }
+    
+    .or-divider span {
+        background: white;
+        padding: 0 15px;
+        position: relative;
+        color: #666;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}">Create Assets</a>
+    &rsaquo; Bulk Upload
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="instructions">
+    <h3>📋 How to Upload Images:</h3>
+    <ul>
+        <li><strong>Step 1:</strong> Select an existing category from dropdown OR create a new one by entering main/sub category names</li>
+        <li><strong>Step 2:</strong> Click "Select Images" and choose multiple images at once (hold Ctrl/Cmd to select multiple)</li>
+        <li><strong>Step 3:</strong> Click "Upload & Continue" - you'll see all your images in a grid</li>
+        <li><strong>Step 4:</strong> Set Premium status and Objects/Tags for each image</li>
+        <li><strong>Step 5:</strong> Save all images at once!</li>
+    </ul>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="upload-form">
+    {% csrf_token %}
+    
+    {% if form.errors %}
+        <div class="errornote">
+            <p>Please correct the errors below:</p>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+    
+    <div class="category-tabs">
+        <button type="button" class="category-tab active" onclick="switchTab('existing')">
+            Use Existing Category
+        </button>
+        <button type="button" class="category-tab" onclick="switchTab('new')">
+            Create New Category
+        </button>
+    </div>
+    
+    <div id="existing-tab" class="tab-content active">
+        <div class="form-row">
+            <label for="existing_category">
+                Select Existing Category: <span style="color: red;">*</span>
+            </label>
+            <select id="existing_category" name="existing_category" class="vSelectField">
+                <option value="">-- Select a category --</option>
+                {% for batch in batches %}
+                    <option value="{{ batch.main_category }}|{{ batch.sub_category|default:'' }}">
+                        {{ batch }}
+                    </option>
+                {% endfor %}
+            </select>
+            <span class="helptext">Select from existing categories</span>
+        </div>
+    </div>
+    
+    <div id="new-tab" class="tab-content">
+        <div class="form-row">
+            <label for="{{ form.main_category.id_for_label }}">
+                Main Category: <span style="color: red;">*</span>
+            </label>
+            {{ form.main_category }}
+            <span class="helptext">{{ form.main_category.help_text }}</span>
+            {% if form.main_category.errors %}
+                <div class="error">{{ form.main_category.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-row">
+            <label for="{{ form.sub_category.id_for_label }}">
+                Sub Category: <span style="color: #666;">(Optional)</span>
+            </label>
+            {{ form.sub_category }}
+            <span class="helptext">{{ form.sub_category.help_text }}</span>
+            {% if form.sub_category.errors %}
+                <div class="error">{{ form.sub_category.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="form-row">
+        <label for="{{ form.images.id_for_label }}">
+            Select Images: <span style="color: red;">*</span>
+        </label>
+        <div class="file-upload-wrapper">
+            {{ form.images }}
+            <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                📁 <strong>Click to select multiple images</strong><br>
+                Hold Ctrl (Windows) or Cmd (Mac) to select multiple files at once
+            </p>
+        </div>
+        <span class="helptext">{{ form.images.help_text }}</span>
+        {% if form.images.errors %}
+            <div class="error">{{ form.images.errors }}</div>
+        {% endif %}
+    </div>
+    
+    <div class="submit-row">
+        <input type="submit" value="Upload & Continue to Configuration ➔" />
+    </div>
+</form>
+
+<script>
+    function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Show selected tab
+        if (tabName === 'existing') {
+            document.getElementById('existing-tab').classList.add('active');
+            document.querySelectorAll('.category-tab')[0].classList.add('active');
+            // Clear new category fields
+            document.getElementById('{{ form.main_category.id_for_label }}').value = '';
+            document.getElementById('{{ form.sub_category.id_for_label }}').value = '';
+        } else {
+            document.getElementById('new-tab').classList.add('active');
+            document.querySelectorAll('.category-tab')[1].classList.add('active');
+            // Clear existing category selection
+            document.getElementById('existing_category').value = '';
+        }
+    }
+    
+    // Handle existing category selection
+    document.getElementById('existing_category').addEventListener('change', function(e) {
+        if (e.target.value) {
+            const [mainCat, subCat] = e.target.value.split('|');
+            document.getElementById('{{ form.main_category.id_for_label }}').value = mainCat;
+            document.getElementById('{{ form.sub_category.id_for_label }}').value = subCat;
+        }
+    });
+    
+    // Show selected file names
+    document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            const wrapper = this.closest('.file-upload-wrapper');
+            let existingInfo = wrapper.querySelector('.file-info');
+            if (!existingInfo) {
+                existingInfo = document.createElement('div');
+                existingInfo.className = 'file-info';
+                existingInfo.style.marginTop = '15px';
+                existingInfo.style.fontWeight = 'bold';
+                existingInfo.style.color = '#417690';
+                existingInfo.style.fontSize = '16px';
+                wrapper.appendChild(existingInfo);
+            }
+            existingInfo.innerHTML = `✓ <strong>${files.length} image(s) selected</strong>`;
+        }
+    });
+</script>
+{% endblock %}

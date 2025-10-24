@@ -1,0 +1,143 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Move Effect: {{ effect.display_name }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:pixverse_effect_changelist' %}">Video Effects</a>
+    &rsaquo; Move Effect
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+   
+    <p><strong>Category:</strong> <span style="background: #e8f4f8; padding: 3px 8px; border-radius: 3px;">{{ category.name }}</span></p>
+    <p><strong>Current Position in {{ category.name }}:</strong> {{ effect.position }}</p>
+    
+    {% if effect.video %}
+    <div class="video-preview">
+        <h3>Current Video:</h3>
+        <video width="400" height="300" controls style="border-radius: 4px;">
+            <source src="{{ effect.video.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    {% endif %}
+    
+    <form method="post" class="move-effect-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="new_position">New Position in {{ category.name }} (0 to {{ max_position }}):</label>
+            <input type="number" 
+                   name="new_position" 
+                   id="new_position" 
+                   min="0" 
+                   max="{{ max_position }}" 
+                   value="{{ effect.position }}"
+                   required>
+            <p class="help">Enter the new position index (0-based). All effect data including video will remain intact.</p>
+        </div>
+
+        <div class="effects-preview">
+            <h3>Current Order in {{ category.name }}:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Name</th>
+                        <th>Display Name</th>
+                        <th>Premium</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for eff in all_effects %}
+                    <tr {% if eff.id == effect.id %}style="background-color: #ffc;"{% endif %}>
+                        <td><strong>{{ eff.position }}</strong></td>
+                        <td>{{ eff.name }}</td>
+                        <td>{{ eff.display_name }}</td>
+                        <td>{% if eff.Prem %}<span style="background: #ffc107; color: black; padding: 2px 6px; border-radius: 2px;">Premium</span>{% else %}<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 2px;">Free</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Move Effect" class="default">
+            <a href="{% url 'admin:pixverse_effect_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .video-preview {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .video-preview h3 {
+        margin-top: 0;
+    }
+    .move-effect-form {
+        max-width: 900px;
+    }
+    .form-group {
+        margin: 20px 0;
+    }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-group input {
+        padding: 8px;
+        font-size: 14px;
+        width: 200px;
+    }
+    .form-group .help {
+        color: #666;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    .effects-preview {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .effects-preview table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .effects-preview th,
+    .effects-preview td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .effects-preview th {
+        background: #417690;
+        color: white;
+    }
+    .submit-row {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .submit-row input[type="submit"] {
+        margin-bottom: 0;
+    }
+</style>
+
+{% endblock %}

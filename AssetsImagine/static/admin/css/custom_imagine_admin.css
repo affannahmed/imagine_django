@@ -1,0 +1,31 @@
+/* Hide the filter sidebar to give more space */
+#changelist-filter {
+    display: none !important;
+}
+
+/* Make the content area full width */
+#changelist {
+    margin-right: 0 !important;
+}
+
+/* Adjust action buttons spacing */
+.action_buttons div {
+    display: flex;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+.action_buttons .button {
+    margin: 0 !important;
+    white-space: nowrap;
+}
+
+/* Make table more compact */
+#result_list th, #result_list td {
+    padding: 8px 5px;
+}
+
+/* Better responsive action column */
+.field-action_buttons {
+    min-width: 350px;
+}

@@ -1,0 +1,143 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Move Image: {{ batch }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}">Create Assets</a>
+    &rsaquo; Move Image
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <p><strong>Current Image Number:</strong> {{ asset.image_number }}</p>
+    
+    <div style="margin: 20px 0;">
+        {% if asset.image %}
+        <img src="{{ asset.image.url }}?t={{ asset.updated_at.timestamp }}" 
+             style="max-height: 200px; max-width: 200px; border: 2px solid #ddd; border-radius: 4px;"
+             onerror="this.src='{{ asset.image.url }}?t=' + Date.now()">
+        {% endif %}
+    </div>
+    
+    <form method="post" class="move-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="new_image_number">New Image Number (0 to {{ max_number }}):</label>
+            <input type="number" 
+                   name="new_image_number" 
+                   id="new_image_number" 
+                   min="0" 
+                   max="{{ max_number }}" 
+                   value="{{ asset.image_number }}"
+                   required>
+        </div>
+
+        <div class="preview-section">
+            <h3>Current Order in {{ batch }}:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Preview</th>
+                        <th>Image Number</th>
+                        <th>Premium</th>
+                        <th>Tags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for img in all_images %}
+                    <tr {% if img.id == asset.id %}style="background-color: #ffc;"{% endif %}>
+                        <td>
+                            {% if img.image %}
+                            <img src="{{ img.image.url }}?t={{ img.updated_at.timestamp }}" 
+                                 style="max-height: 40px; max-width: 40px;"
+                                 onerror="this.src='{{ img.image.url }}?t=' + Date.now()">
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ img.image_number }}</strong></td>
+                        <td>{{ img.is_premium|yesno:"Premium,Free" }}</td>
+                        <td>{{ img.tags|slice:":3"|join:", " }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Move Image" class="default">
+            <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .move-form {
+        max-width: 900px;
+    }
+    .form-group {
+        margin: 20px 0;
+    }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-group input {
+        padding: 8px;
+        font-size: 14px;
+        width: 200px;
+    }
+    .preview-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .preview-section table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .preview-section th,
+    .preview-section td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .preview-section th {
+        background: #417690;
+        color: white;
+    }
+    .submit-row {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .submit-row input[type="submit"] {
+        margin-bottom: 0;
+    }
+</style>
+
+<script>
+// Force refresh all images on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('img[src*="/media/"]');
+    const timestamp = Date.now();
+    
+    images.forEach(img => {
+        const src = img.src;
+        const cleanSrc = src.split('?')[0];
+        img.src = cleanSrc + '?t=' + timestamp;
+    });
+});
+</script>
+
+{% endblock %}

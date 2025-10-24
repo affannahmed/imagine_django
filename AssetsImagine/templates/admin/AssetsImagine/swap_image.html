@@ -1,0 +1,158 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Swap Image: {{ batch }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}">Create Assets</a>
+    &rsaquo; Swap Image
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Swap Image in: {{ batch }}</h1>
+    <p><strong>Current Image Number:</strong> {{ asset.image_number }}</p>
+    
+    <div style="margin: 20px 0;">
+        {% if asset.image %}
+        <img src="{{ asset.image.url }}?t={{ asset.updated_at.timestamp }}" 
+             style="max-height: 200px; max-width: 200px; border: 2px solid #ddd; border-radius: 4px;"
+             onerror="this.src='{{ asset.image.url }}?t=' + Date.now()">
+        {% endif %}
+    </div>
+    
+    <form method="post" class="swap-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="swap_with">Swap with Image:</label>
+            <select name="swap_with" id="swap_with" required>
+                <option value="">-- Select an image to swap with --</option>
+                {% for img in other_images %}
+                <option value="{{ img.id }}">
+                    Image {{ img.image_number }} - {{ img.is_premium|yesno:"Premium,Free" }} - Tags: {{ img.tags|slice:":3"|join:", " }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="preview-section">
+            <h3>Available Images in {{ batch }}:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Preview</th>
+                        <th>Image Number</th>
+                        <th>Premium</th>
+                        <th>Tags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background-color: #ffc;">
+                        <td>
+                            {% if asset.image %}
+                            <img src="{{ asset.image.url }}?t={{ asset.updated_at.timestamp }}" 
+                                 style="max-height: 40px; max-width: 40px;"
+                                 onerror="this.src='{{ asset.image.url }}?t=' + Date.now()">
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ asset.image_number }} (Current)</strong></td>
+                        <td>{{ asset.is_premium|yesno:"Premium,Free" }}</td>
+                        <td>{{ asset.tags|slice:":3"|join:", " }}</td>
+                    </tr>
+                    {% for img in other_images %}
+                    <tr>
+                        <td>
+                            {% if img.image %}
+                            <img src="{{ img.image.url }}?t={{ img.updated_at.timestamp }}" 
+                                 style="max-height: 40px; max-width: 40px;"
+                                 onerror="this.src='{{ img.image.url }}?t=' + Date.now()">
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ img.image_number }}</strong></td>
+                        <td>{{ img.is_premium|yesno:"Premium,Free" }}</td>
+                        <td>{{ img.tags|slice:":3"|join:", " }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Swap Images" class="default">
+            <a href="{% url 'admin:AssetsImagine_imagineasset_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .swap-form {
+        max-width: 900px;
+    }
+    .form-group {
+        margin: 20px 0;
+    }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-group select {
+        padding: 8px;
+        font-size: 14px;
+        width: 100%;
+        max-width: 500px;
+    }
+    .preview-section {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .preview-section table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .preview-section th,
+    .preview-section td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .preview-section th {
+        background: #417690;
+        color: white;
+    }
+    .submit-row {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .submit-row input[type="submit"] {
+        margin-bottom: 0;
+    }
+</style>
+
+<script>
+// Force refresh all images on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('img[src*="/media/"]');
+    const timestamp = Date.now();
+    
+    images.forEach(img => {
+        const src = img.src;
+        const cleanSrc = src.split('?')[0];
+        img.src = cleanSrc + '?t=' + timestamp;
+    });
+});
+</script>
+
+{% endblock %}
