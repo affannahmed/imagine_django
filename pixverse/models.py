@@ -88,10 +88,12 @@ class EffectCategory(models.Model):
         
         super().save(*args, **kwargs)
         
-        # Handle folder rename if category name changed
+        # Handle folder rename and database path update if category name changed
         if old_name and field_changed:
             self._rename_category_folder(old_name, self.name)
+            self._update_effect_paths_in_db(old_name, self.name)
         
+        # ALWAYS clear cache after any save
         self.clear_cache()
         
         # Increment version on creation OR field update
@@ -107,12 +109,78 @@ class EffectCategory(models.Model):
             old_path = os.path.join(settings.MEDIA_ROOT, 'pixverse_effects_imagine', old_folder_name)
             new_path = os.path.join(settings.MEDIA_ROOT, 'pixverse_effects_imagine', new_folder_name)
             
+            print(f"[DEBUG] Renaming folder from: {old_path}")
+            print(f"[DEBUG] Renaming folder to: {new_path}")
+            
             # Only rename if old folder exists and new folder doesn't
-            if os.path.exists(old_path) and not os.path.exists(new_path):
-                shutil.move(old_path, new_path)
+            if os.path.exists(old_path):
+                if not os.path.exists(new_path):
+                    shutil.move(old_path, new_path)
+                    print(f"[DEBUG] Folder renamed successfully!")
+                else:
+                    print(f"[DEBUG] New folder already exists, skipping rename")
+            else:
+                print(f"[DEBUG] Old folder does not exist: {old_path}")
         except Exception as e:
-            # Log error but don't fail the save
             print(f"Error renaming category folder: {str(e)}")
+
+    def _update_effect_paths_in_db(self, old_name, new_name):
+        """Update all effect file paths in database when category is renamed"""
+        try:
+            old_folder_name = old_name.replace(' ', '_').lower()
+            new_folder_name = new_name.replace(' ', '_').lower()
+            
+            old_prefix = f'pixverse_effects_imagine/{old_folder_name}/'
+            new_prefix = f'pixverse_effects_imagine/{new_folder_name}/'
+            
+            print(f"[DEBUG] Updating paths from: {old_prefix}")
+            print(f"[DEBUG] Updating paths to: {new_prefix}")
+            
+            # Get all effects in this category
+            effects = Effect.objects.filter(category=self)
+            updated_count = 0
+            
+            print(f"[DEBUG] Found {effects.count()} effects to update")
+            
+            with transaction.atomic():
+                for effect in effects:
+                    video_updated = False
+                    thumbnail_updated = False
+                    
+                    # Update video path
+                    if effect.video and old_prefix in str(effect.video.name):
+                        old_path = str(effect.video.name)
+                        new_path = old_path.replace(old_prefix, new_prefix)
+                        effect.video.name = new_path
+                        video_updated = True
+                        print(f"[DEBUG] Video path updated for {effect.name}: {old_path} -> {new_path}")
+                    
+                    # Update thumbnail video path
+                    if effect.thumbnailVideoUrl and old_prefix in str(effect.thumbnailVideoUrl.name):
+                        old_path = str(effect.thumbnailVideoUrl.name)
+                        new_path = old_path.replace(old_prefix, new_prefix)
+                        effect.thumbnailVideoUrl.name = new_path
+                        thumbnail_updated = True
+                        print(f"[DEBUG] Thumbnail path updated for {effect.name}: {old_path} -> {new_path}")
+                    
+                    # Save if any path was updated
+                    if video_updated or thumbnail_updated:
+                        # Use update_fields to avoid triggering Effect.save() logic
+                        update_dict = {}
+                        if video_updated:
+                            update_dict['video'] = effect.video.name
+                        if thumbnail_updated:
+                            update_dict['thumbnailVideoUrl'] = effect.thumbnailVideoUrl.name
+                        
+                        Effect.objects.filter(pk=effect.pk).update(**update_dict)
+                        updated_count += 1
+                        print(f"[DEBUG] Effect {effect.name} database record updated")
+            
+            print(f"[DEBUG] Total effects updated: {updated_count}")
+        except Exception as e:
+            print(f"Error updating effect paths in database: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
     def delete(self, *args, **kwargs):
         """Override delete to reindex remaining categories and clear cache"""
@@ -129,14 +197,28 @@ class EffectCategory(models.Model):
 
     @classmethod
     def clear_cache(cls):
-        """Clear all category-related cache"""
+        """Clear all category-related cache - COMPREHENSIVE"""
+        print("[DEBUG] Clearing all cache...")
+        
+        # Delete specific cache keys
         cache.delete('effect_categories_meta')
         cache.delete('all_categories')
         cache.delete('pixverse_version_meta')
         cache.delete('pixverse_all_categories')
+        cache.delete('effect_meta')
+        cache.delete('all_effects')
+        cache.delete('pixverse_trending_effects')
+        
+        # Delete positional cache
         for i in range(1000):
             cache.delete(f'category_position_{i}')
             cache.delete(f'pixverse_effects_index_{i}')
+        
+        # Delete all effect position cache
+        for i in range(10000):
+            cache.delete(f'effect_position_{i}')
+        
+        print("[DEBUG] Cache cleared successfully!")
 
     @classmethod
     def reindex_all(cls):
@@ -428,15 +510,22 @@ class Effect(models.Model):
 
     @classmethod
     def clear_cache(cls):
-        """Clear all effect-related cache"""
+        """Clear all effect-related cache - COMPREHENSIVE"""
+        print("[DEBUG] Clearing all effect cache...")
+        
+        # Delete specific cache keys
         cache.delete('effect_meta')
         cache.delete('all_effects')
         cache.delete('pixverse_version_meta')
         cache.delete('pixverse_all_categories')
         cache.delete('pixverse_trending_effects')
+        
+        # Delete positional cache
         for i in range(10000):
             cache.delete(f'effect_position_{i}')
             cache.delete(f'pixverse_effects_index_{i}')
+        
+        print("[DEBUG] Effect cache cleared successfully!")
 
     @classmethod
     def reindex_category(cls, category_id):

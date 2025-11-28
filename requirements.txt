@@ -1,0 +1,5 @@
+Django>=5.2.4
+djangorestframework
+gunicorn
+psycopg2-binary
+pillow

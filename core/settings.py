@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,7 +25,15 @@ SECRET_KEY = 'django-insecure-2p2$q3lgshpdw19=@wt%fd3ab*tmuz#l12_)*dcw2#rw$f)9=u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['44.222.48.230', '127.0.0.1', 'localhost', 'imaginedjangoassets.rad-wi.com', 'www.imaginedjangoassets.rad-wi.com']
+
+# CSRF and Security
+CSRF_TRUSTED_ORIGINS = [
+    'http://44.222.48.230:8000',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://imaginedjangoassets.rad-wi.com',
+]
 
 
 # Application definition
@@ -43,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,13 +81,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'imagine_db',
+        'USER': 'codeknitters',
+        'PASSWORD': 'codeknittersvbgc',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -95,6 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -102,23 +119,51 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# ============================================
+# STATIC FILES CONFIGURATION
+# ============================================
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For collectstatic
-# Remove STATICFILES_DIRS to fix the warning - Django will use app static folders
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Media files (User uploads)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'AssetsImagine', 'static'),
 ]
+
+# WhiteNoise Configuration for serving static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = True
+
+# ============================================
+# MEDIA FILES CONFIGURATION
+# ============================================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Tell WhiteNoise to serve media files and handle these MIME types
+# WHITENOISE_MIMETYPES = {
+#     '.webmanifest': 'application/manifest+json',
+#     '.mp4': 'video/mp4',
+#     '.webm': 'video/webm',
+#     '.mov': 'video/quicktime',
+#     '.avi': 'video/x-msvideo',
+#     '.mkv': 'video/x-matroska',
+#     '.png': 'image/png',
+#     '.jpg': 'image/jpeg',
+#     '.jpeg': 'image/jpeg',
+#     '.gif': 'image/gif',
+#     '.webp': 'image/webp',
+#     '.svg': 'image/svg+xml',
+# }
+
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework settings
+
+# ============================================
+# REST FRAMEWORK SETTINGS
+# ============================================
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
@@ -126,3 +171,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
 }
+
+
+# ============================================
+# PRODUCTION SECURITY SETTINGS
+# ============================================
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# Allow requests from proxy
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
